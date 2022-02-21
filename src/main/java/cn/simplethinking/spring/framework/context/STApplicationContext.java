@@ -3,6 +3,11 @@ package cn.simplethinking.spring.framework.context;
 import cn.simplethinking.spring.framework.annotation.STAutowired;
 import cn.simplethinking.spring.framework.annotation.STController;
 import cn.simplethinking.spring.framework.annotation.STService;
+import cn.simplethinking.spring.framework.aop.STAopProxy;
+import cn.simplethinking.spring.framework.aop.STCglibAopProxy;
+import cn.simplethinking.spring.framework.aop.STJdkDynamicAopProxy;
+import cn.simplethinking.spring.framework.aop.config.STAopConfig;
+import cn.simplethinking.spring.framework.aop.support.STAdvisedSupport;
 import cn.simplethinking.spring.framework.beans.STBeanFactory;
 import cn.simplethinking.spring.framework.beans.STBeanWrapper;
 import cn.simplethinking.spring.framework.beans.config.STBeanDefinition;
@@ -97,6 +102,10 @@ public class STApplicationContext extends STDefaultListableBeanFactory implement
         STBeanWrapper beanWrapper = new STBeanWrapper(instance);
 
 
+        // 创建一个代理的策略，看是用CGLib还是JDK
+        STAopProxy proxy;
+        //Object proxy = proxy.getProxy();
+        //createProxy();
 
         // 2.拿到BeanWrapper之后，要把BeanWrapper保存到IOC容器中
         //if (this.factoryBeanInstanceCache.containsKey(beanName)) {
@@ -160,6 +169,18 @@ public class STApplicationContext extends STDefaultListableBeanFactory implement
             } else {
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
+
+                STAdvisedSupport config = instantionAopConfig(stBeanDefinition);
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+
+                // 如果符合pointcut就创建代理对象
+                if (config.pointCutMatch()) {
+                    instance = createProxy(config).getProxy();
+                }
+
+                //Class<?> clazz = Class.forName(className);
+
                 this.singletonObjects.put(className, instance);
                 this.singletonObjects.put(stBeanDefinition.getFactoryBeanName(), instance);
             }
@@ -172,6 +193,27 @@ public class STApplicationContext extends STDefaultListableBeanFactory implement
 
         // 4.把BeanWrapper存到IOC容器中
         return instance;
+    }
+
+    private STAopProxy createProxy(STAdvisedSupport config) {
+        Class targetClass = config.getTargetClass();
+
+        if (targetClass.getInterfaces().length > 0) {
+            return new STJdkDynamicAopProxy(config);
+        }
+
+        return new STCglibAopProxy(config);
+    }
+
+    private STAdvisedSupport instantionAopConfig(STBeanDefinition stBeanDefinition) {
+        STAopConfig config = new STAopConfig();
+        config.setPointCut(this.reader.getConfig().getProperty("pointCut"));;
+        config.setAspectClass(this.reader.getConfig().getProperty("aspectClass"));;
+        config.setAspectBefore(this.reader.getConfig().getProperty("aspectBefore"));;
+        config.setAspectAfter(this.reader.getConfig().getProperty("aspectAfter"));;
+        config.setAspectAfterThrow(this.reader.getConfig().getProperty("aspectAfterThrow"));;
+        config.setAspectAfterThrowingName(this.reader.getConfig().getProperty("aspectAfterThrowingName"));;
+        return new STAdvisedSupport(config);
     }
 
     public String[] getBeanDefinitionNames() {

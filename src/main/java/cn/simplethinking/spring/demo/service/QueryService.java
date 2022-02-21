@@ -1,4 +1,4 @@
-package cn.simplethinking.spring.server.service;
+package cn.simplethinking.spring.demo.service;
 
 import cn.simplethinking.spring.framework.annotation.STService;
 

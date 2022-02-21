@@ -1,9 +1,9 @@
-package cn.simplethinking.spring.server.action;
+package cn.simplethinking.spring.demo.action;
 
 import cn.simplethinking.spring.framework.annotation.STAutowired;
 import cn.simplethinking.spring.framework.annotation.STRequestParam;
 import cn.simplethinking.spring.framework.webmvc.servlet.STModelAndView;
-import cn.simplethinking.spring.server.service.QueryService;
+import cn.simplethinking.spring.demo.service.QueryService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
